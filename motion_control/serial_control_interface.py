@@ -160,7 +160,7 @@ class SerialControllerInterface:
         index[0] = 0x00
         index[1] = 0x01
         
-        data_frame = self._encode_data(CmdModes.SET_MECHANICAL_ZERO.value, index= int.from_bytes(index))
+        data_frame = self._encode_data(CmdModes.SET_MECHANICAL_ZERO.value, index= int.from_bytes(index, byteorder='big'))
         # 发送数据帧
         self.serial.write(data_frame)
         # 接收数据帧
