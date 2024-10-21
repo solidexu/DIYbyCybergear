@@ -228,7 +228,7 @@ class SerialControllerInterface:
             data = self.serial.readlines() 
             length = len(data)
             if length > 0 and  len(data[length-1].hex()) == 34:
-                print("接收到read_param的数据帧:", data[length-1].hex())
+                # print("接收到read_param的数据帧:", data[length-1].hex())
                 return self._parse_received_msg(data[length-1], format)
         else:
             print(f"Parameter {parameter_name} not found in parameters list.")
@@ -284,7 +284,7 @@ class SerialControllerInterface:
         # 帧尾两个字节
         data_frame[15] = 0x0d
         data_frame[16] = 0x0a
-        print("发送的字节数组:", data_frame.hex())
+        # print("发送的字节数组:", data_frame.hex())
         return data_frame
     
     # 组合Serial 4字节扩展帧canid
@@ -435,8 +435,8 @@ class SerialControllerInterface:
         data1_bytes = struct.pack(
             "HHHH", target_angle_mapped, target_velocity_mapped, Kp_mapped, Kd_mapped
         )
-        print(type(data1_bytes))
-        print(data1_bytes.hex())
+        # print(type(data1_bytes))
+        # print(data1_bytes.hex())
         # bytes转为bytearray
         data1 = bytearray(8)
         # for i in range(8):
@@ -519,7 +519,7 @@ class SerialControllerInterface:
         canid = canid.to_bytes(4, byteorder='big')
         # 2. 将目标角度和目标速度转换为字节数组
         value = self._pack_conrol_8bytes(target_angle, target_velocity, Kp, Kd)
-        print("发送的电机控制数据帧:", canid.hex(), value.hex())
+        # print("发送的电机控制数据帧:", canid.hex(), value.hex())
         # 3. 构造数据帧
         data_frame = self._encode_data(cmd_mode = cmd_mode.value, bit29 = canid, value = value)
         # 发送数据帧
@@ -528,10 +528,10 @@ class SerialControllerInterface:
         data = self.serial.readlines() 
         length = len(data)
         if length > 0:
-            print("接收到的set0位置应答数据帧:", data[length-1].hex())
+            # print("接收到的set0位置应答数据帧:", data[length-1].hex())
             return self._parse_received_msg(data[length-1], format = "ba")
         else:
-            print(f"Failed to set motor 0 position. No response received.")
+            # print(f"Failed to set motor 0 position. No response received.")
             return None
         
 
@@ -550,21 +550,25 @@ if __name__ == "__main__":
     motor1.set_motor_0position()
     motor2.set_motor_0position()
     motor3.set_motor_0position()
-    
-    time.sleep(1)
     motor3.set_run_mode( RunModes.POSITION_MODE)
-    motor3.set_motor_position_control(1.0, -0.5)
-    time.sleep(3)
-    # motor1.set_run_mode( RunModes.POSITION_MODE)
     motor2.set_run_mode( RunModes.POSITION_MODE)
-    motor2.set_motor_position_control(1.0, -0.5)
-    time.sleep(3)
     motor1.set_run_mode( RunModes.POSITION_MODE)
-    motor1.set_motor_position_control(1.0, 0.5)
-    time.sleep(3)
+    time.sleep(1)
+    
+    motor3.set_motor_position_control(1.0, -1.3)
+    # time.sleep(0.1)
+    # motor1.set_run_mode( RunModes.POSITION_MODE)
+    
+    motor2.set_motor_position_control(1.0, -0.5)
+    # time.sleep(0.1)
+    
+    motor1.set_motor_position_control(1.0, 1)
+    time.sleep(1.5)
     motor1.set_motor_position_control(1.0, 0.0)
-    time.sleep(3)
-    motor2.set_motor_position_control(1.0, -0.1)
+    # time.sleep(0.1)
+    motor2.set_motor_position_control(1.0, 0.0)
+    # time.sleep(0.1)
+    motor3.set_motor_position_control(1.0, 0)
     time.sleep(3)
     # motor1.set_motor_position_control(1.0, 1.57)
     # time.sleep(3)
@@ -593,7 +597,7 @@ if __name__ == "__main__":
     # time.sleep(5)
     # motor1.set_motor_0position()
     # motor2.set_motor_0position()
-    time.sleep(10)
+    time.sleep(1)
     motor1.disable_motor()
     motor2.disable_motor()
     motor3.disable_motor()
