@@ -58,7 +58,7 @@ class SerialControllerInterface:
         "limit_cur": {"index": 0x7018, "format": "f", "min": 0.0, "max": 23.0}
     }
     TWO_BYTES_BITS = 16
-    def __init__(self, motor_id=1, main_can_id=253, port = 'COM8', baudrate = 921600, timeout=0.1):
+    def __init__(self, motor_id=1, main_can_id=253, port = 'COM10', baudrate = 921600, timeout=0.1):
         """
         初始化CAN电机控制器。
 
@@ -542,33 +542,58 @@ if __name__ == "__main__":
     
     motor1 = SerialControllerInterface(1)
     motor2 = SerialControllerInterface(2)
-    motor3 = SerialControllerInterface(3)   
-    motor1.enable_motor()
-    motor2.enable_motor()
-    motor3.enable_motor()
+    motor3 = SerialControllerInterface(3)
+    motor4 = SerialControllerInterface(4)
+    
     motor1.set_motor_0position()
     motor2.set_motor_0position()
     motor3.set_motor_0position()
+    motor4.set_motor_0position()
+    motor1.enable_motor()
+    motor2.enable_motor()
+    motor3.enable_motor()
+    motor4.enable_motor()
     motor3.set_run_mode( RunModes.POSITION_MODE)
     motor2.set_run_mode( RunModes.POSITION_MODE)
     motor1.set_run_mode( RunModes.POSITION_MODE)
-    time.sleep(1)
+    motor4.set_run_mode( RunModes.POSITION_MODE)
+    time.sleep(0.2)
+    # motor4.set_motor_position_control(1.0, -1.3)
+    # time.sleep(1)
+    # motor4.set_motor_position_control(3.0, 1.3)
+    # time.sleep(1)
+    # motor4.set_motor_0position()
     
-    motor3.set_motor_position_control(1.0, -1.3)
+    motor2.set_motor_position_control(2.0, -0.5)
     # time.sleep(0.1)
-    # motor1.set_run_mode( RunModes.POSITION_MODE)
-    
-    motor2.set_motor_position_control(1.0, -0.5)
+    motor1.set_motor_position_control(2.0, -0.5)
     # time.sleep(0.1)
-    
-    motor1.set_motor_position_control(1.0, 1)
-    time.sleep(1.5)
-    motor1.set_motor_position_control(1.0, 0.0)
+    motor3.set_motor_position_control(2.0, 0.3)
     # time.sleep(0.1)
-    motor2.set_motor_position_control(1.0, 0.0)
+    motor4.set_motor_position_control(1.0, -1.3)
+    # time.sleep(0.1)
+    motor4.set_motor_position_control(3.0, 1.3)
     # time.sleep(0.1)
     motor3.set_motor_position_control(1.0, 0)
-    time.sleep(3)
+    # time.sleep(0.1)
+    motor1.set_motor_position_control(1.0, 0)
+    # time.sleep(0.1)
+    motor2.set_motor_position_control(1.0, -0.0)
+    
+    motor4.set_motor_position_control(3.0, 0)
+    # time.sleep(0.1)
+    # # motor1.set_run_mode( RunModes.POSITION_MODE)
+    
+    
+    
+    # motor1.set_motor_position_control(1.0, 1)
+    # time.sleep(1.5)
+    # motor1.set_motor_position_control(1.0, 0.0)
+    # # time.sleep(0.1)
+    # motor2.set_motor_position_control(1.0, 0.0)
+    # # time.sleep(0.1)
+    # motor3.set_motor_position_control(1.0, 0)
+    # time.sleep(3)
     # motor1.set_motor_position_control(1.0, 1.57)
     # time.sleep(3)
     # motor2.set_motor_position_control(1.0, -0.5)
@@ -596,14 +621,16 @@ if __name__ == "__main__":
     # time.sleep(5)
     # motor1.set_motor_0position()
     # motor2.set_motor_0position()
-    time.sleep(1)
+    time.sleep(0.1)
     motor1.disable_motor()
     motor2.disable_motor()
     motor3.disable_motor()
+    motor4.disable_motor()
     
     del motor1
     del motor2
     del motor3
+    del motor4
     
     # motor3 = SerialControllerInterface(3)
     # motor3.enable_motor()
