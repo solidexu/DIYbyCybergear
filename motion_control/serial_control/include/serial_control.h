@@ -73,6 +73,7 @@ struct Decode8BytesData {
         } else {
             os << "result is: " << data.f_res;
         }
+        return os;
     }
 };
 
@@ -122,6 +123,12 @@ private:
 
     Decode8BytesData _decode_8_bytes_data(const std::vector<uint8_t>& data, const std::string& format);
 
+    // 辅助计算函数
+    uint32_t merge_big_endian(const std::vector<uint8_t>& bytes);
+    // 将 uint32_t 按照大端法拆分成 std::vector<uint8_t>
+    std::vector<uint8_t> split_big_endian(uint32_t value);
+    float _uint_to_float(uint16_t x, float x_min, float x_max, uint16_t bits);
+    float _linear_mapping(float value, float value_min, float value_max, float target_min = 0.0, float target_max = 65535.0);
 private:
     SerialPort serial_port_;
     int motor_id_;
@@ -135,67 +142,6 @@ private:
     map<string, tuple<int, string>> param_table_;
     map<string, tuple<int, string, float, float>> parameters;
 };
-
-
-
-uint32_t merge_big_endian(const std::vector<uint8_t>& bytes) {
-    if (bytes.size() > 4) {
-        std::cerr << "Input vector has more than 4 bytes, cannot fit into uint32_t." << std::endl;
-        return 0;
-    }
-
-    uint32_t result = 0;
-    // 大端法合并
-    for (size_t i = 0; i < bytes.size(); ++i) {
-        result |= static_cast<uint32_t>(bytes[i]) << ((3 - i) * 8);
-    }
-}
-
-// 将 uint32_t 按照大端法拆分成 std::vector<uint8_t>
-std::vector<uint8_t> split_big_endian(uint32_t value) {
-    std::vector<uint8_t> bytes(4);
-    for (int i = 0; i < 4; ++i) {
-        // 右移相应位数并取最低 8 位
-        bytes[i] = static_cast<uint8_t>((value >> ((3 - i) * 8)) & 0xFF);
-    }
-    return bytes;
-}
-
-float _uint_to_float(uint16_t x, float x_min, float x_max, uint16_t bits) {
-        /**
-         * 将无符号整数转换为浮点数。
-         *
-         * 参数:
-         * x: 输入的无符号整数。
-         * x_min: 可接受的最小浮点数。
-         * x_max: 可接受的最大浮点数。
-         * bits: 输入无符号整数的位数。
-         *
-         * 返回:
-         * 转换后的浮点数。
-         */
-        uint16_t span = (1 << bits) - 1;
-        float offset = x_max - x_min;
-        x = std::max(std::min(x, span), (uint16_t)0);  // Clamp x to the range [0, span]
-        return offset * x / span + x_min;
-    }
-
-    float _linear_mapping(float value, float value_min, float value_max, float target_min = 0.0, float target_max = 65535.0) {
-        /**
-         * 对输入值进行线性映射。
-         *
-         * 参数:
-         * value: 输入值。
-         * value_min: 输入值的最小界限。
-         * value_max: 输入值的最大界限。
-         * target_min: 输出值的最小界限。
-         * target_max: 输出值的最大界限。
-         *
-         * 返回:
-         * 映射后的值。
-         */
-        return static_cast<int>((value - value_min) / (value_max - value_min) * (target_max - target_min) + target_min);
-    }
 
 
 } // namespace SerialController

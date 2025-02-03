@@ -1,4 +1,4 @@
-#include "serial_control.h"
+#include "serial_control/include/serial_control.h"
 
 namespace SerialController {
 
@@ -45,12 +45,12 @@ void SerialControllerInterface::enter_AT_mode_() {
 }
 
 std::vector<uint8_t> SerialControllerInterface::encode_data_(uint8_t cmd_mode, 
-                                            const std::vector<uint8_t>& index = {}, 
-                                            const std::string& format = "", 
-                                            float value = 0.0, 
-                                            float min = 0.0, 
-                                            float max = 0.0, 
-                                            const std::vector<uint8_t>& bit29 = {}){
+                                            const std::vector<uint8_t>& index, 
+                                            const std::string& format, 
+                                            float value, 
+                                            float min, 
+                                            float max, 
+                                            const std::vector<uint8_t>& bit29){
     std::vector<uint8_t> data_frame(17);
     // 帧头两个字节
     data_frame[0] = 0x41;
@@ -100,7 +100,7 @@ std::vector<uint8_t> SerialControllerInterface::encode_canid_(uint8_t cmd_mode) 
 }
 
 
-std::vector<uint8_t> encode_8_bytes_data_(const std::vector<uint8_t>& index, 
+std::vector<uint8_t> SerialControllerInterface::encode_8_bytes_data_(const std::vector<uint8_t>& index, 
                                                 const std::string& format, 
                                                 float value, 
                                                 float x_min, 
@@ -126,7 +126,8 @@ std::vector<uint8_t> encode_8_bytes_data_(const std::vector<uint8_t>& index,
         return data_frame;
 }
 
-Decode8BytesData SerialControllerInterface::_parse_received_msg(const std::vector<uint8_t>& received_msg_data, const std::string& format = "f") {
+Decode8BytesData SerialControllerInterface::_parse_received_msg(const std::vector<uint8_t>& received_msg_data,
+                                                                const std::string& format) {
         
         std::vector<uint8_t> ex_can_id_msg(received_msg_data.begin()+2, received_msg_data.begin()+6);
         std::vector<uint8_t> ex_can_id = decode_canid_(ex_can_id_msg);
@@ -178,6 +179,66 @@ Decode8BytesData SerialControllerInterface::_decode_8_bytes_data(const std::vect
         
     }
     return res;
+}
+
+
+uint32_t SerialControllerInterface::merge_big_endian(const std::vector<uint8_t>& bytes) {
+    if (bytes.size() > 4) {
+        std::cerr << "Input vector has more than 4 bytes, cannot fit into uint32_t." << std::endl;
+        return 0;
+    }
+
+    uint32_t result = 0;
+    // 大端法合并
+    for (size_t i = 0; i < bytes.size(); ++i) {
+        result |= static_cast<uint32_t>(bytes[i]) << ((3 - i) * 8);
+    }
+    return result;
+}
+
+std::vector<uint8_t> SerialControllerInterface::split_big_endian(uint32_t value) {
+    std::vector<uint8_t> bytes(4);
+    for (int i = 0; i < 4; ++i) {
+        // 右移相应位数并取最低 8 位
+        bytes[i] = static_cast<uint8_t>((value >> ((3 - i) * 8)) & 0xFF);
+    }
+    return bytes;
+}
+
+float SerialControllerInterface::_uint_to_float(uint16_t x, float x_min, float x_max, uint16_t bits) {
+    /**
+     * 将无符号整数转换为浮点数。
+     *
+     * 参数:
+     * x: 输入的无符号整数。
+     * x_min: 可接受的最小浮点数。
+     * x_max: 可接受的最大浮点数。
+     * bits: 输入无符号整数的位数。
+     *
+     * 返回:
+     * 转换后的浮点数。
+     */
+    uint16_t span = (1 << bits) - 1;
+    float offset = x_max - x_min;
+    x = std::max(std::min(x, span), (uint16_t)0);  // Clamp x to the range [0, span]
+    return offset * x / span + x_min;
+}
+
+float SerialControllerInterface::_linear_mapping(float value, float value_min, float value_max, float target_min, float target_max) {
+    /**
+     * 对输入值进行线性映射。
+     *
+     * 参数:
+     * value: 输入值。
+     * value_min: 输入值的最小界限。
+     * value_max: 输入值的最大界限。
+     * target_min: 输出值的最小界限。
+     * target_max: 输出值的最大界限。
+     *
+     * 返回:
+     * 映射后的值。
+     */
+    return static_cast<int>((value - value_min) / (value_max - value_min) * (target_max - target_min) + target_min);
 }
 
 } // namespace SerialController
