@@ -31,6 +31,42 @@ SerialControllerInterface::SerialControllerInterface(const int& motor_id,
     
 }
 
+void SerialControllerInterface::enable_motor(){
+    if(!serial_port_.IsOpen()){
+        try{
+            serial_port_.Open(port_);
+        } catch(exception& e) {
+            cout << "Error: Cannot open serial port" << endl;
+        }
+    }
+    serial_port_.FlushIOBuffers(); // 清除缓冲区
+    enter_AT_mode_();
+    DataBuffer data_buffer = encode_data_(CmdModes::MOTOR_ENABLE);
+    serial_port_.Write(data_buffer); // 发送数据
+    std::string dataString;
+    serial_port_.ReadLine(dataString);
+    std::cout << "dataString: " << dataString << std::endl;
+
+
+}
+
+void SerialControllerInterface::disable_motor(){
+    if(!serial_port_.IsOpen()){
+        try{
+            serial_port_.Open(port_);
+        } catch(exception& e) {
+            cout << "Error: Cannot open serial port" << endl;
+        }
+    }
+    serial_port_.FlushIOBuffers(); // 清除缓冲区
+    enter_AT_mode_();
+    DataBuffer data_buffer = encode_data_(CmdModes::MOTOR_STOP);
+    serial_port_.Write(data_buffer); // 发送数据
+    std::string dataString;
+    serial_port_.ReadLine(dataString);
+    std::cout << "dataString: " << dataString << std::endl;
+}
+
 void SerialControllerInterface::enter_AT_mode_() {
     string str;
     str.push_back(0x41);

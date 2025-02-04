@@ -31,7 +31,7 @@ using namespace std;
 using namespace LibSerial;
 
 // 通信类型
-enum class CmdModes {
+enum CmdModes : uint8_t{
     GET_DEVICE_ID = 0,
     MOTOR_CONTROL = 1,
     MOTOR_FEEDBACK = 2,
@@ -46,7 +46,7 @@ enum class CmdModes {
 };
 
 // 控制模式
-enum class RunModes {
+enum RunModes : uint8_t {
     CONTROL_MODE = 0, // 运控模式
     POSITION_MODE = 1, // 位置模式
     SPEED_MODE = 2, // 速度模式
@@ -93,7 +93,8 @@ public:
 
 // public 方法
 public: 
-
+    void enable_motor();
+    void disable_motor();
 // private 方法
 private:
     // 进入AT模式   

@@ -3,10 +3,14 @@
 // Gtest 模板
 #include <gtest/gtest.h>
 
-
+#include <unistd.h>
 #include <memory>
-TEST(SerialControlTest, Test1) {
-    
+TEST(SerialControlTest, Enable_Disable) {
+    using namespace SerialController;
+    SerialControllerInterface *serial = new SerialControllerInterface(1);
+    serial->enable_motor();
+    usleep(1000000); // sleep 1s
+    serial->disable_motor();
 }
 TEST(SerialControlTest, Test2) {
     
