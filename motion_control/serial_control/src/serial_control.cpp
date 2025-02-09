@@ -28,54 +28,44 @@ SerialControllerInterface::SerialControllerInterface(const int& motor_id,
     // Set the number of stop bits.
     serial_port_.SetStopBits(StopBits::STOP_BITS_1) ;
         
-    
+    init_parameters_();
 }
 
-void SerialControllerInterface::enable_motor(){
-    if(!serial_port_.IsOpen()){
-        try{
-            serial_port_.Open(port_);
-        } catch(exception& e) {
-            cout << "Error: Cannot open serial port" << endl;
-        }
-    }
-    // serial_port_.FlushIOBuffers(); // 清除缓冲区
-    enter_AT_mode_();
-    DataBuffer data_buffer = encode_data_(CmdModes::MOTOR_ENABLE);
-    serial_port_.Write(data_buffer); // 发送数据
-    std::string dataString;
-    usleep(10000); // 等待10ms
-    serial_port_.ReadLine(dataString,'\n',250);
-    std::cout << "dataString: " << dataString << std::endl;
-    if (dataString.find("OK") != std::string::npos) 
-    {
-        dataString.clear();
-        serial_port_.ReadLine(dataString,'\n',250); // 读取下一行数据
-    }
-    std::cout << "dataString: " << dataString << std::endl;
-    
-    // DataBuffer read_buffer ;
-    // size_t ms_timeout = 250 ;
-    // usleep(1000);
-    // try
-    // {
-    //     // Read as many bytes as are available during the timeout period.
-    //     serial_port_.Read(read_buffer, 0, ms_timeout) ;
-    // }
-    // catch (const ReadTimeout&)
-    // {
-    //     for (size_t i = 0 ; i < read_buffer.size() ; i++)
-    //     {
-    //         std::cout << read_buffer.at(i) << std::flush ;
-    //     }
-
-    //     std::cerr << "The Read() call timed out waiting for additional data." << std::endl ;
-    // }
-
+void SerialControllerInterface::init_param_table_(){
+    param_table_["motorOverTemp"] = std::make_tuple(0x200D, "int16");
+    param_table_["overTempTime"] = std::make_tuple(0x200E, "int32");
+    param_table_["limit_torque"] = std::make_tuple(0x2007, "float");
+    param_table_["cur_kp"] = std::make_tuple(0x2012, "float");
+    param_table_["cur_ki"] = std::make_tuple(0x2013, "float");
+    param_table_["spd_kp"] = std::make_tuple(0x2014, "float");
+    param_table_["spd_ki"] = std::make_tuple(0x2015, "float");
+    param_table_["loc_kp"] = std::make_tuple(0x2016, "float");
+    param_table_["spd_filt_gain"] = std::make_tuple(0x2017, "float");
+    param_table_["limit_spd"] = std::make_tuple(0x2018, "float");
+    param_table_["limit_cur"] = std::make_tuple(0x2019, "float");
 
 }
 
-void SerialControllerInterface::disable_motor(){
+void SerialControllerInterface::init_parameters_(){
+    parameters_["run_mode"] = std::make_tuple(0x7005, "u8", 0, 3);
+    parameters_["iq_ref"] = std::make_tuple(0x7006, "f", -23.0, 23.0);
+    parameters_["spd_ref"] = std::make_tuple(0x700A, "f", -30.0, 30.0);
+    parameters_["limit_torque"] = std::make_tuple(0x700B, "f", 0.0, 12.0);
+    parameters_["cur_kp"] = std::make_tuple(0x7010, "f", 0.0, 500.0);
+    parameters_["cur_ki"] = std::make_tuple(0x7011, "f", 0.0, 5.0);
+    parameters_["cur_filt_gain"] = std::make_tuple(0x7014, "f", 0.0, 1.0);
+    parameters_["loc_ref"] = std::make_tuple(0x7016, "f", -4 * PI, 4 * PI);
+    parameters_["limit_spd"] = std::make_tuple(0x7017, "f", 0.0, 30.0);
+    parameters_["limit_cur"] = std::make_tuple(0x7018, "f", 0.0, 23.0);
+
+}
+
+SerialControllerInterface::~SerialControllerInterface()
+{
+    serial_port_.Close();
+}
+
+void SerialControllerInterface::standard_write_preprocess_(){
     if(!serial_port_.IsOpen()){
         try{
             serial_port_.Open(port_);
@@ -84,12 +74,43 @@ void SerialControllerInterface::disable_motor(){
         }
     }
     serial_port_.FlushIOBuffers(); // 清除缓冲区
-    enter_AT_mode_();
+    enter_AT_mode_(); // 进入AT模式
+}
+
+void SerialControllerInterface::standard_parse_received_msg_(){
+    std::string dataString;
+    usleep(10000); // 等待10ms
+    serial_port_.ReadLine(dataString,'\n',MAX_TIMEOUT);
+    std::cout << "dataString: " << dataString << std::endl;
+    if (dataString.find("OK") != std::string::npos) 
+    {
+        dataString.clear();
+        serial_port_.ReadLine(dataString,'\n',MAX_TIMEOUT); // 读取下一行数据
+    }
+    std::cout << "dataString: " << dataString << std::endl;
+    std::vector<uint8_t> vec(dataString.begin(), dataString.end());
+    
+    Decode8BytesData res = parse_received_msg_(vec,"ba");
+    std::cout << "res: " << res << std::endl;
+}
+
+void SerialControllerInterface::enable_motor(){
+    std::cout << "Enable motor" << std::endl;
+    standard_write_preprocess_();
+    DataBuffer data_buffer = encode_data_(CmdModes::MOTOR_ENABLE);
+    serial_port_.Write(data_buffer); // 发送数据
+    
+    standard_parse_received_msg_(); // 读取并解析返回的数据
+
+
+}
+
+void SerialControllerInterface::disable_motor(){
+    std::cout << "Disable motor" << std::endl;
+    standard_write_preprocess_();
     DataBuffer data_buffer = encode_data_(CmdModes::MOTOR_STOP);
     serial_port_.Write(data_buffer); // 发送数据
-    std::string dataString;
-    serial_port_.ReadLine(dataString);
-    std::cout << "dataString: " << dataString << std::endl;
+    standard_parse_received_msg_();
 }
 
 void SerialControllerInterface::enter_AT_mode_() {
@@ -104,6 +125,47 @@ void SerialControllerInterface::enter_AT_mode_() {
     serial_port_.Write(str) ;
     // std::cout << "Enter AT mode" << std::endl;
 }
+
+void SerialControllerInterface::set_motor_0position(){
+    std::cout << "Set motor 0 position" << std::endl;
+    standard_write_preprocess_();
+    std::vector<uint8_t> index = {0x01, 0x00};
+    DataBuffer data_buffer = encode_data_(CmdModes::SET_MECHANICAL_ZERO, index);
+    serial_port_.Write(data_buffer); // 发送数据
+    standard_parse_received_msg_();
+}
+
+void SerialControllerInterface::set_run_mode(const RunModes& run_mode){
+    std::cout << "set_run_mode" << std::endl;
+    write_single_param("run_mode", static_cast<float>(run_mode));
+}
+
+void SerialControllerInterface::set_motor_position_control(const float& limit_spd, const float& loc_ref){
+    std::cout << "set_motor_position_control" << std::endl;
+    write_single_param("limit_spd", limit_spd);
+    write_single_param("loc_ref", loc_ref);
+}
+
+void SerialControllerInterface::write_single_param(const std::string& param_name, float value) {
+    std::cout << "write_single_param " << param_name << std::endl;
+    standard_write_preprocess_();
+    if (parameters_.find(param_name) != parameters_.end()) {
+        uint16_t u16index = std::get<0>(parameters_[param_name]);
+        // 将uint16_t转换为字节数组
+        std::vector<uint8_t> index = { static_cast<uint8_t>(u16index & 0xFF), static_cast<uint8_t>(u16index >> 8)};
+        std::string format = std::get<1>(parameters_[param_name]);
+        float min = std::get<2>(parameters_[param_name]);
+        float max = std::get<3>(parameters_[param_name]);
+        std::vector<uint8_t> data_frame = encode_data_(static_cast<uint8_t>(CmdModes::SINGLE_PARAM_WRITE), index, format, value, min, max);
+        // 发送数据帧
+        serial_port_.Write(data_frame);
+        // 接收数据帧
+        standard_parse_received_msg_();
+    } else {
+        std::cout << "Parameter " << param_name << " not found in parameters list." << std::endl;
+    }
+}
+
 
 std::vector<uint8_t> SerialControllerInterface::encode_data_(uint8_t cmd_mode, 
                                             const std::vector<uint8_t>& index, 
@@ -187,7 +249,7 @@ std::vector<uint8_t> SerialControllerInterface::encode_8_bytes_data_(const std::
         return data_frame;
 }
 
-Decode8BytesData SerialControllerInterface::_parse_received_msg(const std::vector<uint8_t>& received_msg_data,
+Decode8BytesData SerialControllerInterface::parse_received_msg_(const std::vector<uint8_t>& received_msg_data,
                                                                 const std::string& format) {
         
         std::vector<uint8_t> ex_can_id_msg(received_msg_data.begin()+2, received_msg_data.begin()+6);
@@ -195,7 +257,7 @@ Decode8BytesData SerialControllerInterface::_parse_received_msg(const std::vecto
         std::cout << "ex_can_id is: " << merge_big_endian(ex_can_id) << std::endl;
         // 数据帧
         std::vector<uint8_t> data(received_msg_data.begin()+7, received_msg_data.begin()+15);
-        Decode8BytesData result = _decode_8_bytes_data(data, format);
+        Decode8BytesData result = decode_8_bytes_data_(data, format);
         // if (format == "ba") {
         //     std::cout << "pos: " << result.pos << std::endl;
         //     std::cout << "vel: " << result.vel << std::endl;
@@ -218,7 +280,7 @@ std::vector<uint8_t> SerialControllerInterface::decode_canid_(const std::vector<
         return split_big_endian(canid_int);
 }
 
-Decode8BytesData SerialControllerInterface::_decode_8_bytes_data(const std::vector<uint8_t>& data, const std::string& format) {
+Decode8BytesData SerialControllerInterface::decode_8_bytes_data_(const std::vector<uint8_t>& data, const std::string& format) {
     Decode8BytesData res;
     res.format = format;
     if (format == "u8") {

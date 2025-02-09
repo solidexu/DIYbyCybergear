@@ -13,6 +13,10 @@
 #include <string.h>
 #include <algorithm>
 
+
+
+namespace SerialController {
+
 #define PI 3.1415926
 #define P_MIN -4 * PI
 #define P_MAX 4 * PI
@@ -25,8 +29,7 @@
 #define KD_MIN 0.0
 #define KD_MAX 5.0
 #define TWO_BYTES_BITS 16
-
-namespace SerialController {
+#define MAX_TIMEOUT 25
     
 using namespace std;
 using namespace LibSerial;
@@ -64,7 +67,7 @@ struct Decode8BytesData {
     float temperature_celsius;
     // 重写输出<<，用于输出结构体内容
     friend ostream& operator<<(ostream& os, const Decode8BytesData& data) {
-        os << "format: " << data.format ;
+        os << "format: " << data.format << " " ;
         if (data.format == "ba") {
             os << "pos: " << data.pos << " vel: " << data.vel << 
                 " torque: " << data.torque << 
@@ -96,10 +99,15 @@ public:
 public: 
     void enable_motor();
     void disable_motor();
+    void set_motor_0position();
+    void set_run_mode(const RunModes& run_mode);
+    void write_single_param(const std::string& param_name, float value);
+    void set_motor_position_control(const float& limit_spd, const float& loc_ref);
 // private 方法
 private:
     // 进入AT模式   
     void enter_AT_mode_();
+    void standard_write_preprocess_();
     // 编码数据
     std::vector<uint8_t> encode_data_(uint8_t cmd_mode, 
                     const std::vector<uint8_t>& index = {}, 
@@ -118,12 +126,13 @@ private:
                                                 float x_max);
     
     // 解码数据
-    Decode8BytesData _parse_received_msg(const std::vector<uint8_t>& received_msg_data, 
+    void standard_parse_received_msg_(); // 标准解析封装
+    Decode8BytesData parse_received_msg_(const std::vector<uint8_t>& received_msg_data, 
                                     const std::string& format = "f");
 
     std::vector<uint8_t> decode_canid_(const std::vector<uint8_t>& ex_can_id);
 
-    Decode8BytesData _decode_8_bytes_data(const std::vector<uint8_t>& data, const std::string& format);
+    Decode8BytesData decode_8_bytes_data_(const std::vector<uint8_t>& data, const std::string& format);
 
     // 辅助计算函数
     uint32_t merge_big_endian(const std::vector<uint8_t>& bytes);
@@ -141,8 +150,12 @@ private:
 
 
 private:
-    map<string, tuple<int, string>> param_table_;
-    map<string, tuple<int, string, float, float>> parameters;
+    map<string, tuple<int, string>> param_table_; // 读取参数表
+    map<string, tuple<int, string, float, float>> parameters_; // 写入参数表
+
+private:
+    void init_param_table_();
+    void init_parameters_();
 };
 
 
