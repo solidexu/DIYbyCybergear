@@ -1,6 +1,7 @@
 #ifndef _SERIAL_CONTROL_H_
 #define _SERIAL_CONTROL_H_
 
+#include <unistd.h>
 #include <stdint.h>
 #include <iostream>
 #include <string>

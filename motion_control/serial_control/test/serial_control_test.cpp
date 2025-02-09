@@ -9,7 +9,7 @@ TEST(SerialControlTest, Enable_Disable) {
     using namespace SerialController;
     SerialControllerInterface *serial = new SerialControllerInterface(1);
     serial->enable_motor();
-    usleep(1000000); // sleep 1s
+    sleep(1); // sleep 1s
     serial->disable_motor();
 }
 TEST(SerialControlTest, Test2) {

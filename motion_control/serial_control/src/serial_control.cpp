@@ -18,7 +18,7 @@ SerialControllerInterface::SerialControllerInterface(const int& motor_id,
         cout << "Error: Cannot open serial port" << endl;
     }
     // Set the baud rates.
-    serial_port_.SetBaudRate(BaudRate::BAUD_115200);
+    serial_port_.SetBaudRate(BaudRate::BAUD_921600);
     // Set the number of data bits.
     serial_port_.SetCharacterSize(CharacterSize::CHAR_SIZE_8);
     // Set the hardware flow control.
@@ -39,13 +39,38 @@ void SerialControllerInterface::enable_motor(){
             cout << "Error: Cannot open serial port" << endl;
         }
     }
-    serial_port_.FlushIOBuffers(); // 清除缓冲区
+    // serial_port_.FlushIOBuffers(); // 清除缓冲区
     enter_AT_mode_();
     DataBuffer data_buffer = encode_data_(CmdModes::MOTOR_ENABLE);
     serial_port_.Write(data_buffer); // 发送数据
     std::string dataString;
-    serial_port_.ReadLine(dataString);
+    usleep(10000); // 等待10ms
+    serial_port_.ReadLine(dataString,'\n',250);
     std::cout << "dataString: " << dataString << std::endl;
+    if (dataString.find("OK") != std::string::npos) 
+    {
+        dataString.clear();
+        serial_port_.ReadLine(dataString,'\n',250); // 读取下一行数据
+    }
+    std::cout << "dataString: " << dataString << std::endl;
+    
+    // DataBuffer read_buffer ;
+    // size_t ms_timeout = 250 ;
+    // usleep(1000);
+    // try
+    // {
+    //     // Read as many bytes as are available during the timeout period.
+    //     serial_port_.Read(read_buffer, 0, ms_timeout) ;
+    // }
+    // catch (const ReadTimeout&)
+    // {
+    //     for (size_t i = 0 ; i < read_buffer.size() ; i++)
+    //     {
+    //         std::cout << read_buffer.at(i) << std::flush ;
+    //     }
+
+    //     std::cerr << "The Read() call timed out waiting for additional data." << std::endl ;
+    // }
 
 
 }
