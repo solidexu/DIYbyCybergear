@@ -2,31 +2,37 @@
 
 namespace SerialController {
 
-SerialControllerInterface::SerialControllerInterface(const int& motor_id,
+SerialControllerInterface::SerialControllerInterface(std::shared_ptr<SerialPort> serial_port_ptr,
+                                                    const int& motor_id,
                                                     const int& main_can_id,
                                                     const string& port,
                                                     const BaudRate& baudrate,
-                                                    const float& timeout) {
+                                                    const float& timeout
+                                                    ) {
     motor_id_ = motor_id;
     main_can_id_ = main_can_id;
     port_ = port;
     baudrate_ = baudrate;
     timeout_ = timeout;
-    try{
-        serial_port_.Open(port_);
-    } catch(exception& e) {
-        cout << "Error: Cannot open serial port" << endl;
+    serial_port_ptr_ = serial_port_ptr;
+    if(!serial_port_ptr_->IsOpen()){
+        try{
+            serial_port_ptr_->Open(port_);
+        } catch(exception& e) {
+            cout << "Error: Cannot open serial port" << endl;
+        }
+        // Set the baud rates.
+        serial_port_ptr_->SetBaudRate(BaudRate::BAUD_921600);
+        // Set the number of data bits.
+        serial_port_ptr_->SetCharacterSize(CharacterSize::CHAR_SIZE_8);
+        // Set the hardware flow control.
+        serial_port_ptr_->SetFlowControl(FlowControl::FLOW_CONTROL_NONE);
+        // Set the parity.
+        serial_port_ptr_->SetParity(Parity::PARITY_NONE);
+        // Set the number of stop bits.
+        serial_port_ptr_->SetStopBits(StopBits::STOP_BITS_1) ;
     }
-    // Set the baud rates.
-    serial_port_.SetBaudRate(BaudRate::BAUD_921600);
-    // Set the number of data bits.
-    serial_port_.SetCharacterSize(CharacterSize::CHAR_SIZE_8);
-    // Set the hardware flow control.
-    serial_port_.SetFlowControl(FlowControl::FLOW_CONTROL_NONE);
-     // Set the parity.
-    serial_port_.SetParity(Parity::PARITY_NONE);
-    // Set the number of stop bits.
-    serial_port_.SetStopBits(StopBits::STOP_BITS_1) ;
+    
         
     init_parameters_();
 }
@@ -62,30 +68,32 @@ void SerialControllerInterface::init_parameters_(){
 
 SerialControllerInterface::~SerialControllerInterface()
 {
-    serial_port_.Close();
+    if(serial_port_ptr_->IsOpen()){
+        serial_port_ptr_->Close();
+    }
 }
 
 void SerialControllerInterface::standard_write_preprocess_(){
-    if(!serial_port_.IsOpen()){
+    if(!serial_port_ptr_->IsOpen()){
         try{
-            serial_port_.Open(port_);
+            serial_port_ptr_->Open(port_);
         } catch(exception& e) {
             cout << "Error: Cannot open serial port" << endl;
         }
     }
-    serial_port_.FlushIOBuffers(); // 清除缓冲区
+    serial_port_ptr_->FlushIOBuffers(); // 清除缓冲区
     enter_AT_mode_(); // 进入AT模式
 }
 
 void SerialControllerInterface::standard_parse_received_msg_(){
     std::string dataString;
     usleep(10000); // 等待10ms
-    serial_port_.ReadLine(dataString,'\n',MAX_TIMEOUT);
+    serial_port_ptr_->ReadLine(dataString,'\n',MAX_TIMEOUT);
     std::cout << "dataString: " << dataString << std::endl;
     if (dataString.find("OK") != std::string::npos) 
     {
         dataString.clear();
-        serial_port_.ReadLine(dataString,'\n',MAX_TIMEOUT); // 读取下一行数据
+        serial_port_ptr_->ReadLine(dataString,'\n',MAX_TIMEOUT); // 读取下一行数据
     }
     std::cout << "dataString: " << dataString << std::endl;
     std::vector<uint8_t> vec(dataString.begin(), dataString.end());
@@ -98,7 +106,7 @@ void SerialControllerInterface::enable_motor(){
     std::cout << "Enable motor" << std::endl;
     standard_write_preprocess_();
     DataBuffer data_buffer = encode_data_(CmdModes::MOTOR_ENABLE);
-    serial_port_.Write(data_buffer); // 发送数据
+    serial_port_ptr_->Write(data_buffer); // 发送数据
     
     standard_parse_received_msg_(); // 读取并解析返回的数据
 
@@ -109,7 +117,7 @@ void SerialControllerInterface::disable_motor(){
     std::cout << "Disable motor" << std::endl;
     standard_write_preprocess_();
     DataBuffer data_buffer = encode_data_(CmdModes::MOTOR_STOP);
-    serial_port_.Write(data_buffer); // 发送数据
+    serial_port_ptr_->Write(data_buffer); // 发送数据
     standard_parse_received_msg_();
 }
 
@@ -122,7 +130,7 @@ void SerialControllerInterface::enter_AT_mode_() {
     str.push_back(0x54);
     str.push_back(0x0d);
     str.push_back(0x0a);
-    serial_port_.Write(str) ;
+    serial_port_ptr_->Write(str) ;
     // std::cout << "Enter AT mode" << std::endl;
 }
 
@@ -131,7 +139,7 @@ void SerialControllerInterface::set_motor_0position(){
     standard_write_preprocess_();
     std::vector<uint8_t> index = {0x01, 0x00};
     DataBuffer data_buffer = encode_data_(CmdModes::SET_MECHANICAL_ZERO, index);
-    serial_port_.Write(data_buffer); // 发送数据
+    serial_port_ptr_->Write(data_buffer); // 发送数据
     standard_parse_received_msg_();
 }
 
@@ -158,7 +166,7 @@ void SerialControllerInterface::write_single_param(const std::string& param_name
         float max = std::get<3>(parameters_[param_name]);
         std::vector<uint8_t> data_frame = encode_data_(static_cast<uint8_t>(CmdModes::SINGLE_PARAM_WRITE), index, format, value, min, max);
         // 发送数据帧
-        serial_port_.Write(data_frame);
+        serial_port_ptr_->Write(data_frame);
         // 接收数据帧
         standard_parse_received_msg_();
     } else {

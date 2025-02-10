@@ -12,7 +12,7 @@
 #include <libserial/SerialPort.h>
 #include <string.h>
 #include <algorithm>
-
+#include <memory>
 
 
 namespace SerialController {
@@ -87,11 +87,13 @@ public:
     // 禁止默认构造函数
     SerialControllerInterface() = delete;
 
-    SerialControllerInterface(const int& motor_id = 1,
+    SerialControllerInterface(std::shared_ptr<SerialPort> serial_port_ptr = nullptr,
+                            const int& motor_id = 1,
                             const int& main_can_id = 253,
                             const string& port = "/dev/ttyUSB0",
                             const BaudRate& baudrate = BaudRate::BAUD_921600,
-                            const float& timeout = 0.1);
+                            const float& timeout = 0.1
+                            );
 
     ~SerialControllerInterface();
 
@@ -141,7 +143,7 @@ private:
     float _uint_to_float(uint16_t x, float x_min, float x_max, uint16_t bits);
     float _linear_mapping(float value, float value_min, float value_max, float target_min = 0.0, float target_max = 65535.0);
 private:
-    SerialPort serial_port_;
+    std::shared_ptr<SerialPort> serial_port_ptr_;
     int motor_id_;
     int main_can_id_;
     string port_;
