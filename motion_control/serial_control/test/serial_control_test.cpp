@@ -42,6 +42,16 @@ TEST(SerialControlTest, POSITION_MODE) {
     motor3->set_motor_position_control(1.0, 0.5);
     motor1->set_motor_position_control(2.0, -0.5);
     sleep(2); // sleep 1s
+
+    Decode8BytesData data;
+    motor1->read_standard_msg(data);
+    std::cout << "motor1: " << data << std::endl;
+    motor2->read_standard_msg(data);
+    std::cout << "motor2: " << data << std::endl;
+    motor3->read_standard_msg(data);
+    std::cout << "motor3: " << data << std::endl;
+    motor4->read_standard_msg(data);
+    std::cout << "motor4: " << data << std::endl;
     
     motor4->set_motor_position_control(3.0, -3.14);
     motor1->set_motor_position_control(2.0, -0.0);

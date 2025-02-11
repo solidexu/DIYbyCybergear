@@ -104,7 +104,9 @@ public:
     void set_motor_0position();
     void set_run_mode(const RunModes& run_mode);
     void write_single_param(const std::string& param_name, float value);
+    float read_single_parameter(const std::string& parameter_name);
     void set_motor_position_control(const float& limit_spd, const float& loc_ref);
+    bool read_standard_msg(Decode8BytesData& data); // 标准数据读取封装
 // private 方法
 private:
     // 进入AT模式   
@@ -152,8 +154,8 @@ private:
 
 
 private:
-    map<string, tuple<int, string>> param_table_; // 读取参数表
-    map<string, tuple<int, string, float, float>> parameters_; // 写入参数表
+    map<string, tuple<uint16_t, string>> param_table_; // 读取参数表
+    map<string, tuple<uint16_t, string, float, float>> parameters_; // 写入参数表
 
 private:
     void init_param_table_();

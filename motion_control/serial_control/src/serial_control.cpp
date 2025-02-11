@@ -81,7 +81,7 @@ void SerialControllerInterface::standard_write_preprocess_(){
             cout << "Error: Cannot open serial port" << endl;
         }
     }
-    serial_port_ptr_->FlushIOBuffers(); // 清除缓冲区
+    serial_port_ptr_->FlushInputBuffer(); // 清除缓冲区
     enter_AT_mode_(); // 进入AT模式
 }
 
@@ -94,12 +94,13 @@ void SerialControllerInterface::standard_parse_received_msg_(){
     {
         dataString.clear();
         serial_port_ptr_->ReadLine(dataString,'\n',MAX_TIMEOUT); // 读取下一行数据
+        std::cout << "dataString: " << dataString << std::endl;
+        std::vector<uint8_t> vec(dataString.begin(), dataString.end());
+        
+        Decode8BytesData res = parse_received_msg_(vec,"ba");
+        std::cout << "res: " << res << std::endl;
     }
-    std::cout << "dataString: " << dataString << std::endl;
-    std::vector<uint8_t> vec(dataString.begin(), dataString.end());
     
-    Decode8BytesData res = parse_received_msg_(vec,"ba");
-    std::cout << "res: " << res << std::endl;
 }
 
 void SerialControllerInterface::enable_motor(){
@@ -154,6 +155,31 @@ void SerialControllerInterface::set_motor_position_control(const float& limit_sp
     write_single_param("loc_ref", loc_ref);
 }
 
+bool SerialControllerInterface::read_standard_msg(Decode8BytesData& data){
+    std::cout << "read_standard_msg" << std::endl;
+    
+    standard_write_preprocess_();
+    DataBuffer data_buffer = encode_data_(CmdModes::MOTOR_ENABLE);
+    serial_port_ptr_->Write(data_buffer); // 发送数据
+
+    std::string dataString;
+    usleep(10000); // 等待10ms
+    serial_port_ptr_->ReadLine(dataString,'\n',MAX_TIMEOUT);
+    std::cout << "dataString: " << dataString << std::endl;
+    if (dataString.find("OK") != std::string::npos) 
+    {
+        dataString.clear();
+        serial_port_ptr_->ReadLine(dataString,'\n',MAX_TIMEOUT); // 读取下一行数据
+        std::cout << "dataString: " << dataString << std::endl;
+        std::vector<uint8_t> vec(dataString.begin(), dataString.end());
+        
+        data = parse_received_msg_(vec,"ba");
+        std::cout << "res: " << data << std::endl;
+        return true;
+    }
+    return false;
+    
+}
 void SerialControllerInterface::write_single_param(const std::string& param_name, float value) {
     std::cout << "write_single_param " << param_name << std::endl;
     standard_write_preprocess_();
@@ -173,6 +199,25 @@ void SerialControllerInterface::write_single_param(const std::string& param_name
         std::cout << "Parameter " << param_name << " not found in parameters list." << std::endl;
     }
 }
+
+float SerialControllerInterface::read_single_parameter(const std::string& parameter_name) {
+    std::cout << "read_single_parameter " << parameter_name << std::endl;
+    if (param_table_.find(parameter_name) != param_table_.end()) {
+        uint16_t u16index =std::get<0>( param_table_.at(parameter_name));
+        std::string format =std::get<1>( param_table_.at(parameter_name));
+        // 将uint16_t转换为字节数组
+        std::vector<uint8_t> index = { static_cast<uint8_t>(u16index & 0xFF), static_cast<uint8_t>(u16index >> 8)};
+        std::vector<uint8_t> data_frame = encode_data_(static_cast<uint8_t>(CmdModes::SINGLE_PARAM_READ), index, format);
+        // 发送数据帧
+        serial_port_ptr_->Write(data_frame);
+        // 接收数据帧
+        
+    } else {
+        std::cout << "Parameter " << parameter_name << " not found in parameters list." << std::endl;
+    }
+    return 0.0;
+}
+
 
 
 std::vector<uint8_t> SerialControllerInterface::encode_data_(uint8_t cmd_mode, 
