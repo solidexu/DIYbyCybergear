@@ -53,8 +53,8 @@ void MyRobot::init() {
     position_joint_interface_.registerHandle(jointPositionHandleA);
     // Create Joint Limit interface for JointA
     joint_limits_interface::getJointLimits("JointA", nh_, limits);
-    joint_limits_interface::PositionJointSaturationHandle jointLimitsHandleC(jointPositionHandleA, limits);
-    positionJointSaturationInterface.registerHandle(jointLimitsHandleC);  
+    joint_limits_interface::PositionJointSaturationHandle jointLimitsHandleA(jointPositionHandleA, limits);
+    positionJointSaturationInterface.registerHandle(jointLimitsHandleA);  
 
     /* *********************************************************************
     ************************************Joint B ****************************
@@ -140,15 +140,16 @@ void MyRobot::read() {
 
 
 void MyRobot::write(ros::Duration elapsed_time) {
-  // Safety
-  effortJointSaturationInterface.enforceLimits(elapsed_time);   // enforce limits for JointA and JointB
-  positionJointSaturationInterface.enforceLimits(elapsed_time); // enforce limits for JointC
+    // Safety
+    effortJointSaturationInterface.enforceLimits(elapsed_time);   // enforce limits for JointA and JointB
+    positionJointSaturationInterface.enforceLimits(elapsed_time); // enforce limits for JointC
 
 
-  // Write the protocol (I2C/CAN/ros_serial/ros_industrial)used to send the commands to the robot's actuators.
-  // the output commands need to send are joint_effort_command_[0] for JointA, joint_effort_command_[1] for JointB and 
-
-  //joint_position_command_ for JointC.
+    // Write the protocol (I2C/CAN/ros_serial/ros_industrial)used to send the commands to the robot's actuators.
+    for (size_t i = 0; i < motors_ptrs_.size(); i++)
+    {
+        motors_ptrs_[i]->set_motor_position_control(1, joint_position_command_[i]);
+    }
 
 }
 
@@ -162,7 +163,7 @@ int main(int argc, char** argv)
     ros::NodeHandle nh;
     
     //Separate Sinner thread for the Non-Real time callbacks such as service callbacks to load controllers
-    ros::MultiThreadedspinner(2); 
+    ros::MultiThreadedSpinner spinner(2); 
     
     
     // Create the object of the robot hardware_interface class and spin the thread. 

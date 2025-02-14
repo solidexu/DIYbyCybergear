@@ -32,6 +32,14 @@ file(GLOB INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include/[^.]*.h ${CMAKE_CURRE
 # 将src文件夹下的所有源文件都放到MOTION_CONTROL_SRCS全局变量中
 file(GLOB SRCS ${CMAKE_CURRENT_SOURCE_DIR}/src/[^.]*.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/[^.]*.cc)
 
+# 6. install
+# 将头文件安装到/usr/local/include/${SUB_PROJECT_NAME}目录下
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/ DESTINATION /usr/local/include/${SUB_PROJECT_NAME})
+# 将动态链接库安装到/usr/local/lib目录下
+install(TARGETS ${SUB_PROJECT_NAME} DESTINATION /usr/local/lib)
+# 将静态链接库安装到/usr/local/lib目录下
+install(TARGETS ${SUB_PROJECT_NAME}_static DESTINATION /usr/local/lib)
+
 ADD_MODULE_SRC(MOTION_CONTROL_TEST_SRCS ${TEST_SRCS})
 ADD_MODULE_SRC(MOTION_CONTROL_SRCS ${SRCS})
 ADD_MODULE_SRC(MOTION_CONTROL_INCLUDE_DIRS ${INCLUDE_DIRS})
