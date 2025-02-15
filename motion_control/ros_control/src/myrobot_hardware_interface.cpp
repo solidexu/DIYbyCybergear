@@ -5,20 +5,22 @@
 MyRobot::MyRobot(ros::NodeHandle& nh) : nh_(nh) {
 
     serial_port_ =  std::make_shared<SerialPort>();
-    motors_ptrs_.resize(4);
+    motors_ptrs_.resize(4, nullptr);
     motors_ptrs_[0] = std::make_shared<SerialControllerInterface>(serial_port_, 1);
     motors_ptrs_[1] = std::make_shared<SerialControllerInterface>(serial_port_, 2);
     motors_ptrs_[2] = std::make_shared<SerialControllerInterface>(serial_port_, 3);
     motors_ptrs_[3] = std::make_shared<SerialControllerInterface>(serial_port_, 4);
 
-    motors_ptrs_[4]->set_motor_0position(); // set motor 0 position
-    motors_ptrs_[3]->set_motor_0position(); // set motor 0 position
-    motors_ptrs_[2]->set_motor_0position(); // set motor 0 position
+    motors_ptrs_[0]->set_motor_0position(); // set motor 0 position
     motors_ptrs_[1]->set_motor_0position(); // set motor 0 position
-    motors_ptrs_[4]->enable_motor();
-    motors_ptrs_[3]->enable_motor();
-    motors_ptrs_[2]->enable_motor();
+    motors_ptrs_[2]->set_motor_0position(); // set motor 0 position
+    motors_ptrs_[3]->set_motor_0position(); // set motor 0 position
+    sleep(1); // sleep 1s
+    std::cout << "Finish: set motor 0 position" << std::endl;
+    motors_ptrs_[0]->enable_motor();
     motors_ptrs_[1]->enable_motor();
+    motors_ptrs_[2]->enable_motor();
+    motors_ptrs_[3]->enable_motor();
     sleep(1); // sleep 1s
     // Declare all JointHandles, JointInterfaces and JointLimitInterfaces of the robot.
     init();
@@ -37,6 +39,11 @@ MyRobot::MyRobot(ros::NodeHandle& nh) : nh_(nh) {
 
 
 MyRobot::~MyRobot() {
+    for (size_t i = 0; i < motors_ptrs_.size(); i++)
+    {
+        motors_ptrs_[i]->disable_motor();
+    }
+    
 }
 
 
@@ -129,7 +136,7 @@ void MyRobot::read() {
     for (size_t i = 0; i < motors_ptrs_.size(); i++)
     {
         motors_ptrs_[i]->read_standard_msg(data);
-        std::cout << "motor" << i << ": " << data << std::endl;
+        // std::cout << "motor" << i << ": " << data << std::endl;
         joint_position_[i] = data.pos;
         joint_velocity_[i] = data.vel;
         joint_effort_[i] = data.torque;
@@ -159,7 +166,7 @@ int main(int argc, char** argv)
 {
 
     //Initialze the ROS node.
-    ros::init(argc, argv, "MyRobot_hardware_inerface_node");
+    ros::init(argc, argv, "myrobot_hardware_interface");
     ros::NodeHandle nh;
     
     //Separate Sinner thread for the Non-Real time callbacks such as service callbacks to load controllers

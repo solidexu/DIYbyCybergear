@@ -18,10 +18,10 @@ TEST(SerialControlTest, POSITION_MODE) {
     sleep(1);
     using namespace SerialController;
     std::shared_ptr<SerialPort> serial = std::make_shared<SerialPort>();
-    SerialControllerInterface *motor1 = new SerialControllerInterface(serial, 1);
-    SerialControllerInterface *motor2 = new SerialControllerInterface(serial, 2);
-    SerialControllerInterface *motor3 = new SerialControllerInterface(serial, 3);
-    SerialControllerInterface *motor4 = new SerialControllerInterface(serial, 4);
+    std::shared_ptr<SerialControllerInterface> motor1 = std::make_shared<SerialControllerInterface>(serial, 1);
+    std::shared_ptr<SerialControllerInterface> motor2 = std::make_shared<SerialControllerInterface>(serial, 2);
+    std::shared_ptr<SerialControllerInterface> motor3 = std::make_shared<SerialControllerInterface>(serial, 3);
+    std::shared_ptr<SerialControllerInterface> motor4 = std::make_shared<SerialControllerInterface>(serial, 4);
     motor4->set_motor_0position(); // set motor 0 position
     motor3->set_motor_0position(); // set motor 0 position
     motor2->set_motor_0position(); // set motor 0 position

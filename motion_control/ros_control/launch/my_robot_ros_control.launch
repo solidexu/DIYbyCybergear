@@ -1,0 +1,3 @@
+<launch>
+    <node pkg="ros_control" name="myrobot_ros_control" type="myrobot_hardware_interface" output="screen" respawn="true"/>
+</launch>

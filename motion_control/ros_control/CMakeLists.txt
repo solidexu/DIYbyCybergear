@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(my_robot_ros_control)
+project(ros_control)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -109,12 +109,12 @@ find_package(catkin REQUIRED COMPONENTS
 ## LIBRARIES: libraries you create in this project that dependent projects also need
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
-# catkin_package(
-#  INCLUDE_DIRS include
-# #  LIBRARIES my_robot_ros_control
-#  CATKIN_DEPENDS  hardware_interface roscpp
-# #  DEPENDS system_lib
-# )
+catkin_package(
+ INCLUDE_DIRS include
+#  LIBRARIES my_robot_ros_control
+ CATKIN_DEPENDS  hardware_interface roscpp
+#  DEPENDS system_lib
+)
 
 ###########
 ## Build ##
@@ -206,3 +206,7 @@ include_directories(
 # catkin_add_nosetests(test)
 add_executable(myrobot_hardware_interface src/myrobot_hardware_interface.cpp)
 target_link_libraries(myrobot_hardware_interface ${catkin_LIBRARIES} serial_control serial)
+
+
+# make install launch
+
