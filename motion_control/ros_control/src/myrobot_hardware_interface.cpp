@@ -29,7 +29,7 @@ MyRobot::MyRobot(ros::NodeHandle& nh) : nh_(nh) {
     controller_manager_.reset(new controller_manager::ControllerManager(this, nh_));
     
     //Set the frequency of the control loop.
-    loop_hz_=10;
+    loop_hz_=50;
     ros::Duration update_freq = ros::Duration(1.0/loop_hz_);
     
     //Run the control loop
@@ -170,7 +170,7 @@ int main(int argc, char** argv)
     ros::NodeHandle nh;
     
     //Separate Sinner thread for the Non-Real time callbacks such as service callbacks to load controllers
-    ros::MultiThreadedSpinner spinner(2); 
+    ros::MultiThreadedSpinner spinner(4); 
     
     
     // Create the object of the robot hardware_interface class and spin the thread. 

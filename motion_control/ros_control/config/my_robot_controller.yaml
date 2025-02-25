@@ -1,0 +1,24 @@
+assembly9:
+  arm_joint_controller:
+    type: "position_controllers/JointTrajectoryController"
+    joints: 
+      - JointA
+      - JointB
+      - JointC
+      - JointD
+    
+    gains:
+      JointA:   {p: 1000.0, i: 0.0, d: 0.1, i_clamp: 0.0}
+      JointB:   {p: 1000.0, i: 0.0, d: 0.1, i_clamp: 0.0}
+      JointC:   {p: 1000.0, i: 0.0, d: 0.1, i_clamp: 0.0}
+      JointD:   {p: 1000.0, i: 0.0, d: 0.1, i_clamp: 0.0}
+
+    constraints:
+      goal_time: 1.0
+      stopped_velocity_tolerance: 0.2
+    stop_trajectory_duration: 0
+    update_rate: 500
+    state_publish_rate:  500
+    action_monitor_rate: 10
+    allowed_execution_duration_scaling: 4.0
+    allowed_goal_duration_margin: 0.5
