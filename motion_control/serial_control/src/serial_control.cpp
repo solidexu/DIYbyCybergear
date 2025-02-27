@@ -154,7 +154,7 @@ void SerialControllerInterface::set_motor_0position(){
 }
 
 void SerialControllerInterface::set_run_mode(const RunModes& run_mode){
-    std::cout << "set_run_mode" << std::endl;
+    // std::cout << "set_run_mode" << std::endl;
     write_single_param("run_mode", static_cast<float>(run_mode));
 }
 

@@ -8,14 +8,20 @@ project(ros_control)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  roscpp
-  std_msgs
-  message_generation
-  hardware_interface
-  controller_manager
-  joint_limits_interface
-  transmission_interface
+  actionlib
   urdf
+  cmake_modules
+  control_msgs
+  control_toolbox
+  controller_manager
+  hardware_interface
+  joint_limits_interface
+  roscpp
+  sensor_msgs
+  std_msgs
+  trajectory_msgs
+  transmission_interface
+
 )
 
 ## System dependencies are found with CMake's conventions

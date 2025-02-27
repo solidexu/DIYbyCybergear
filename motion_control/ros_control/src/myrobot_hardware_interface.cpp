@@ -22,6 +22,10 @@ MyRobot::MyRobot(ros::NodeHandle& nh) : nh_(nh) {
     motors_ptrs_[2]->enable_motor();
     motors_ptrs_[3]->enable_motor();
     sleep(1); // sleep 1s
+    for (size_t i = 0; i < motors_ptrs_.size(); i++)
+    {
+        motors_ptrs_[i]->set_run_mode(RunModes::POSITION_MODE);
+    }
     // Declare all JointHandles, JointInterfaces and JointLimitInterfaces of the robot.
     init();
     
@@ -29,7 +33,7 @@ MyRobot::MyRobot(ros::NodeHandle& nh) : nh_(nh) {
     controller_manager_.reset(new controller_manager::ControllerManager(this, nh_));
     
     //Set the frequency of the control loop.
-    loop_hz_=50;
+    loop_hz_=10;
     ros::Duration update_freq = ros::Duration(1.0/loop_hz_);
     
     //Run the control loop
@@ -150,7 +154,6 @@ void MyRobot::write(ros::Duration elapsed_time) {
     // Safety
     effortJointSaturationInterface.enforceLimits(elapsed_time);   // enforce limits for JointA and JointB
     positionJointSaturationInterface.enforceLimits(elapsed_time); // enforce limits for JointC
-
 
     // Write the protocol (I2C/CAN/ros_serial/ros_industrial)used to send the commands to the robot's actuators.
     for (size_t i = 0; i < motors_ptrs_.size(); i++)
