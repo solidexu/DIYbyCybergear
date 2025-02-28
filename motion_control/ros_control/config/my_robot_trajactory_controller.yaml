@@ -1,0 +1,12 @@
+assembly9:
+  arm_trajactory_controller:
+    type: "position_controllers/JointTrajectoryController"
+    joints: 
+      - JointA
+      - JointB
+      - JointC
+      - JointD
+
+  joint_state_controller:
+    type: joint_state_controller/JointStateController
+    publish_rate: 50  

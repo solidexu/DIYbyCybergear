@@ -1,0 +1,21 @@
+<!-- <launch>
+    <node pkg="ros_control" name="myrobot_ros_control" type="myrobot_hardware_interface" output="screen" respawn="true"/>
+</launch> -->
+
+<launch>    
+  <param name="robot_description" textfile="$(find assembly9)/urdf/assembly9.urdf" />
+
+  <rosparam file="$(find ros_control)/config/joint_limits.yaml" command="load"/>
+  <rosparam file="$(find ros_control)/config/my_robot_position_controller.yaml" command="load"/>
+  <node pkg="ros_control" name="myrobot_ros_control" type="myrobot_hardware_interface" output="screen"/>
+  
+  
+  <node name="my_robot_controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen"
+        args="/assembly9/jointA_position_controller
+              /assembly9/jointB_position_controller
+              /assembly9/jointC_position_controller
+              /assembly9/jointD_position_controller
+              /assembly9/joint_state_controller"
+              />
+</launch>
+
